@@ -52,21 +52,35 @@ while i <= int(jobs_num/2)+1:
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     i = i + 1
     time.sleep(0.5)
-    driver.execute_script("window.scrollTo(1, document.body.scrollHeight);")
+    driver.execute_script("window.scrollTo(10, document.body.scrollHeight);")
+    last_height = driver.execute_script("return document.body.scrollHeight")
+
     try:
         if b.is_displayed():
             break
-    except Exception:
+    except (Exception,):
         pass
 # this is button clicker, Linked in asks to click on it after a while scrolling
     try:
         # We try to click on the load more results buttons in case it is already displayed.
         infinite_scroller_button = driver.find_element(By.XPATH, ".//button[@aria-label='См. еще вакансии']")
         infinite_scroller_button.click()
-        time.sleep(1.5)
+        time.sleep(2)
+        infinite_scroller_button.click()
+        time.sleep(2)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        new_height = driver.execute_script("return document.body.scrollHeight")
+
+
     except(Exception,):
         # If there is no button, there will be an error, so we keep scrolling down.
         time.sleep(0.1)
+        pass
+
+    try:
+        if new_height == last_height:
+            break
+    except:
         pass
 job_lists = driver.find_element(By.CLASS_NAME, "jobs-search__results-list")
 jobs = job_lists.find_elements(By.TAG_NAME, "li")  # return a list
@@ -76,6 +90,7 @@ company_name = []
 location = []
 date = []
 job_link = []
+print("Now please don't escape, and wait for the job title, company name, location, date posted are")
 
 for job in jobs:
 
@@ -93,6 +108,8 @@ for job in jobs:
 
     job_link0 = job.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
     job_link.append(job_link0)
+    print("Current at: ", job_title.index(job_title0) )
+
 
 print(len(company_name), "- Jobs found!")
 # here we created the lists where we store the data
@@ -173,5 +190,5 @@ df = pd.DataFrame(data=d)
 
 driver.minimize_window()
 json_nam = input("Please write name to save JSON file:\n") + ".json"
-df.to_json(json_nam, orient="index")
+df.to_json(json_nam, orient="index",force_ascii=False,)
 
