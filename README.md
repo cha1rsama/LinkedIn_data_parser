@@ -5,3 +5,4 @@ Also in order code to work please install libraries with pip:
   pip install selenium
   pip install webdriver-manager
   pip install pandas
+  pip install os-sys
