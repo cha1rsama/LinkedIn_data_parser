@@ -4,6 +4,8 @@ import time
 from selenium.webdriver.common.by import By
 import pandas as pd
 import os
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
 
 # options
 
@@ -33,6 +35,7 @@ for item in country_name.split(" "):
 
 rawlink = "https://www.linkedin.com/jobs/search?keywords={0}&location={1}"
 url = rawlink.format(job_url, country_url)
+start = time.time()
 
 # Opening the url we have just defined in our browser
 driver.get(url)
@@ -42,9 +45,9 @@ for element in driver.find_elements(By.XPATH, "//div[@class='results-context-hea
 # this is indicator showing that we browsed till the end
 try:
     b = driver.find_element(By.XPATH, "/html/body/div[1]/div/main/section[2]/div/p")
-except Exception:
+except (Exception,):
     pass
-# while loop is scrolling down intil it see the indicator
+# while loop is scrolling down until it see the indicator
 i = 2
 
 while i <= int(jobs_num/2)+1:
@@ -71,26 +74,27 @@ while i <= int(jobs_num/2)+1:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         new_height = driver.execute_script("return document.body.scrollHeight")
 
-
+    # If there is no button, there will be an error, so we keep scrolling down.
     except(Exception,):
-        # If there is no button, there will be an error, so we keep scrolling down.
         time.sleep(0.1)
         pass
 
     try:
         if new_height == last_height:
             break
-    except:
+    except(Exception,):
         pass
 job_lists = driver.find_element(By.CLASS_NAME, "jobs-search__results-list")
 jobs = job_lists.find_elements(By.TAG_NAME, "li")  # return a list
+driver.minimize_window()
 
 job_title = []
 company_name = []
 location = []
 date = []
 job_link = []
-print("Now please don't escape, and wait for the job title, company name, location, date posted are")
+# notification
+print("Now please don't escape, and wait for the job title, company name, location, date posted are being parsed...")
 
 for job in jobs:
 
@@ -108,11 +112,12 @@ for job in jobs:
 
     job_link0 = job.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
     job_link.append(job_link0)
-    print("Current at: ", job_title.index(job_title0) )
+    print("Current at: ", job_title.index(job_title0))
 
 
 print(len(company_name), "- Jobs found!")
 # here we created the lists where we store the data
+driver.maximize_window()
 jd = []
 seniority = []
 emp_type = []
@@ -125,13 +130,23 @@ for item in range(len(jobs)):
     # clicking job to view job details
     job_click_path = f"/html/body/div[1]/div/main/section[2]/ul/li[{item + 1}]"
     more_info_path = "/html/body/div[1]/div/section/div[2]/div/section[1]/div/div/section/button[1]"
-    time.sleep(3)
+
     job.find_element(By.XPATH, job_click_path).click()
-    time.sleep(3)
-    job.find_element(By.XPATH, more_info_path).click()
+    # time.sleep(1)
+    while True:
+        try:
+            job_find = WebDriverWait(job, 3).until(ec.element_to_be_clickable((By.XPATH, more_info_path))).click()
+            # time.sleep(1)
+            break
+        except(Exception,):
+            job.find_element(By.XPATH, f"/html/body/div[1]/div/main/section[2]/ul/li[{item}]").click()
+            # time.sleep(1)
+            job.find_element(By.XPATH, f"/html/body/div[1]/div/main/section[2]/ul/li[{item + 1}]").click()
     # time.sleep(3)
-
-
+    # job.find_element(By.XPATH, job_click_path).click()
+    # time.sleep(3)
+    # job.find_element(By.XPATH, more_info_path).click()
+    # # time.sleep(3)
     print("Current at: ", int(item+1), "Percentage at: ", int(item + 1) / len(jobs) * 100, "%")
     jd_path = "/html/body/div[1]/div/section/div[2]/div/section[1]/div/div/section/div"
     jd0 = job.find_element(By.XPATH, jd_path).get_attribute("innerText").replace("\n", " ")
@@ -141,7 +156,7 @@ for item in range(len(jobs)):
     try:
         seniority0 = job.find_element(By.XPATH, seniority_path).get_attribute("innerText")
         seniority.append(seniority0)
-    except:
+    except(Exception,):
         seniority0 = "-"
         seniority.append(seniority0)
 
@@ -150,7 +165,7 @@ for item in range(len(jobs)):
     try:
         emp_type0 = job.find_element(By.XPATH, emp_type_path).get_attribute("innerText")
         emp_type.append(emp_type0)
-    except:
+    except(Exception,):
         emp_type0 = "-"
         emp_type.append(emp_type0)
 
@@ -159,7 +174,7 @@ for item in range(len(jobs)):
     try:
         job_func_elements = job.find_element(By.XPATH, job_func_path).get_attribute("innerText")
         job_func.append(job_func_elements)
-    except:
+    except(Exception,):
         job_func_final = "no info"
         job_func.append(job_func_final)
 
@@ -168,10 +183,12 @@ for item in range(len(jobs)):
     try:
         industries_elements = job.find_element(By.XPATH, industries_path).get_attribute("innerText")
         industries.append(industries_elements)
-    except:
+    except(Exception,):
         industries_final = "no info"
         industries.append(industries_final)
-
+end = time.time()
+(elapsed_time) = end - start
+print("Elapsed time: ", int(elapsed_time), " seconds")
 #  we create pandas dataframe and then convert it to the JSON
 d = ({
     'Date Posted': date,
@@ -190,5 +207,4 @@ df = pd.DataFrame(data=d)
 
 driver.minimize_window()
 json_nam = input("Please write name to save JSON file:\n") + ".json"
-df.to_json(json_nam, orient="index",force_ascii=False,)
-
+df.to_json(json_nam, orient="index", force_ascii=False,)
