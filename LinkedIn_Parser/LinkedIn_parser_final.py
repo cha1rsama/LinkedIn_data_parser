@@ -1,9 +1,12 @@
+import json
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 import time
 from selenium.webdriver.common.by import By
 import pandas as pd
+import os
+
 # options
 
 options = webdriver.ChromeOptions()
@@ -12,7 +15,7 @@ options.add_argument("--start-maximized")
 job_name = input("Please add the targeting job:\n")
 country_name = input("Please add the target location:\n")
 driver_service = Service(
-    executable_path="C:/Users/akbar/PycharmProjects/pythonProject/selenium_project/chrome_driver/chromedriver.exe")
+    executable_path=os.getcwd() + "/chromedriver.exe")
 driver = webdriver.Chrome(service=driver_service, options=options)
 
 # here we make input to the right format
@@ -171,5 +174,6 @@ d = ({
 df = pd.DataFrame(data=d)
 
 driver.minimize_window()
-json_nam = input("Please write name to save JSON file:\n")
-df.to_json(json_nam + ".json", orient="index")
+json_nam = input("Please write name to save JSON file:\n") + ".json"
+df.to_json(json_nam, orient="index")
+
