@@ -147,7 +147,7 @@ for item in range(len(jobs)):
     # time.sleep(3)
     # job.find_element(By.XPATH, more_info_path).click()
     # # time.sleep(3)
-    print("Current at: ", int(item+1), "Percentage at: ", int(item + 1) / len(jobs) * 100, "%")
+    print("Current at: ", int(item+1), "Percentage at: ", round(int(item + 1) / len(jobs) * 100), "%")
     jd_path = "/html/body/div[1]/div/section/div[2]/div/section[1]/div/div/section/div"
     jd0 = job.find_element(By.XPATH, jd_path).get_attribute("innerText").replace("\n", " ")
     jd.append(jd0)
