@@ -39,18 +39,19 @@ start = time.time()
 
 # Opening the url we have just defined in our browser
 driver.get(url)
-for element in driver.find_elements(By.XPATH, "//div[@class='results-context-header']//h1[@class='results-context-header__context']//span[@class='results-context-header__job-count']"):
+for element in driver.find_elements(By.XPATH,
+                                    "//div[@class='results-context-header']//h1[@class='results-context-header__context']//span[@class='results-context-header__job-count']"):
     jobs_num = int(element.text.replace(" ", ""))
 
 # this is indicator showing that we browsed till the end
 try:
-    b = driver.find_element(By.XPATH, "/html/body/div[1]/div/main/section[2]/div/p")
+    final_page = driver.find_element(By.XPATH, "/html/body/div[1]/div/main/section[2]/div/p")
 except (Exception,):
     pass
 # while loop is scrolling down until it see the indicator
 i = 2
 
-while i <= int(jobs_num/2)+1:
+while i <= int(jobs_num / 2) + 1:
     # We keep scrolling down to the end of the view.
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     i = i + 1
@@ -59,11 +60,11 @@ while i <= int(jobs_num/2)+1:
     last_height = driver.execute_script("return document.body.scrollHeight")
 
     try:
-        if b.is_displayed():
+        if final_page.is_displayed():
             break
     except (Exception,):
         pass
-# this is button clicker, Linked in asks to click on it after a while scrolling
+    # this is button clicker, Linked in asks to click on it after a while scrolling
     try:
         # We try to click on the load more results buttons in case it is already displayed.
         infinite_scroller_button = driver.find_element(By.XPATH, ".//button[@aria-label='См. еще вакансии']")
@@ -93,11 +94,11 @@ company_name = []
 location = []
 date = []
 job_link = []
+salary = []
 # notification
 print("Now please don't escape, and wait for the job title, company name, location, date posted are being parsed...")
 
 for job in jobs:
-
     job_title0 = job.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText")
     job_title.append(job_title0)
 
@@ -112,6 +113,14 @@ for job in jobs:
 
     job_link0 = job.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
     job_link.append(job_link0)
+
+    try:
+        salary0 = job.find_element(By.CSS_SELECTOR, " div > div > div > span.job-search-card__salary-info").text
+        salary.append(salary0)
+        print(salary0)
+    except(Exception,):
+        salary.append("no info")
+
     print("Current at: ", job_title.index(job_title0))
 
 
@@ -147,7 +156,7 @@ for item in range(len(jobs)):
     # time.sleep(3)
     # job.find_element(By.XPATH, more_info_path).click()
     # # time.sleep(3)
-    print("Current at: ", int(item+1), "Percentage at: ", round(int(item + 1) / len(jobs) * 100), "%")
+    print("Current at: ", int(item + 1), "Percentage at: ", round(int(item + 1) / len(jobs) * 100), "%")
     jd_path = "/html/body/div[1]/div/section/div[2]/div/section[1]/div/div/section/div"
     jd0 = job.find_element(By.XPATH, jd_path).get_attribute("innerText").replace("\n", " ")
     jd.append(jd0)
@@ -157,8 +166,7 @@ for item in range(len(jobs)):
         seniority0 = job.find_element(By.XPATH, seniority_path).get_attribute("innerText")
         seniority.append(seniority0)
     except(Exception,):
-        seniority0 = "-"
-        seniority.append(seniority0)
+        seniority.append("no info")
 
     # ---------------------------------------------------------------
     emp_type_path = "/html/body/div[1]/div/section/div[2]/div/section[1]/div/ul/li[2]/span"
@@ -166,8 +174,7 @@ for item in range(len(jobs)):
         emp_type0 = job.find_element(By.XPATH, emp_type_path).get_attribute("innerText")
         emp_type.append(emp_type0)
     except(Exception,):
-        emp_type0 = "-"
-        emp_type.append(emp_type0)
+        emp_type.append("no info")
 
     # ---------------------------------------------------------------
     job_func_path = "/html/body/div[1]/div/section/div[2]/div/section[1]/div/ul/li[3]/span"
@@ -175,8 +182,7 @@ for item in range(len(jobs)):
         job_func_elements = job.find_element(By.XPATH, job_func_path).get_attribute("innerText")
         job_func.append(job_func_elements)
     except(Exception,):
-        job_func_final = "no info"
-        job_func.append(job_func_final)
+        job_func.append("no info")
 
     # ---------------------------------------------------------------
     industries_path = "/html/body/div[1]/div/section/div[2]/div/section[1]/div/ul/li[4]/span"
@@ -184,8 +190,9 @@ for item in range(len(jobs)):
         industries_elements = job.find_element(By.XPATH, industries_path).get_attribute("innerText")
         industries.append(industries_elements)
     except(Exception,):
-        industries_final = "no info"
-        industries.append(industries_final)
+        industries.append("no info")
+    # ----------------------------------------------------------------
+
 end = time.time()
 (elapsed_time) = end - start
 print("Elapsed time: ", int(elapsed_time), " seconds")
@@ -200,9 +207,9 @@ d = ({
     'Employment Type': emp_type,
     'Skills Required': job_func,
     'Job Market': industries,
-    'Contact Link': job_link
+    'Contact Link': job_link,
+    'Salary': salary
 })
-
 df = pd.DataFrame(data=d)
 
 driver.minimize_window()
